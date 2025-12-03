@@ -1,0 +1,30 @@
+{
+  "B001": {
+    "book_id": "B001",
+    "title": "Pemrograman Python",
+    "author": "Andi",
+    "pages": 320,
+    "copies": 1
+  },
+  "B002": {
+    "book_id": "B002",
+    "title": "Struktur Data & Algoritma",
+    "author": "Budi",
+    "pages": 280,
+    "copies": 2
+  },
+  "B003": {
+    "book_id": "B003",
+    "title": "Basis Data",
+    "author": "Citra",
+    "pages": 240,
+    "copies": 1
+  },
+  "1324": {
+    "book_id": "1324",
+    "title": "Dipa The Explorer",
+    "author": "Alok Dipa",
+    "pages": 109,
+    "copies": 0
+  }
+}
