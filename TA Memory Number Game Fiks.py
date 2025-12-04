@@ -42,7 +42,6 @@ class MemoryGame:
         self.history_score = []
         self.history_steps = []
 
-        # ============ COUNTDOWN TIMER (120 detik) ============
         self.time_seconds = 120
         self.timer_running = False
 
@@ -78,7 +77,6 @@ class MemoryGame:
                                    bg="#1e233e", fg="#ffc04c")
         self.info_steps.pack(pady=5)
 
-        # ============ Countdown Timer Display ============
         self.info_timer = tk.Label(self.root, text="Timer: 02:00",
                                    font=("Verdana", 14, "bold"),
                                    bg="#1e233e", fg="#f94dff")
@@ -94,7 +92,6 @@ class MemoryGame:
                   bg="#0099ff", fg="white",
                   activebackground="#0076c7").pack(pady=5)
 
-    # ================= Timer Function ==================
     def start_timer(self):
         if not self.timer_running:
             self.timer_running = True
@@ -117,14 +114,12 @@ class MemoryGame:
         self.root.after(1000, self.update_timer)
 
     def game_over(self):
-        # Kunci semua tombol
         for btn in self.buttons:
             btn.config(state="disabled")
         messagebox.showerror("GAME OVER", "Waktu habis!\nSilahkan restart game.")
 
-    # ================= Game Logic ==================
     def open_card(self, index):
-        if not self.timer_running:  # Prevent moves after timeout
+        if not self.timer_running:
             return
 
         if len(self.opened_cards) == 2:
@@ -191,6 +186,7 @@ class MemoryGame:
 
         self.update_info()
 
+    # 🔥 Perbaikan penuh timer restart
     def restart_game(self):
         self._score = 0
         self._steps = 0
@@ -205,9 +201,12 @@ class MemoryGame:
         for btn in self.buttons:
             btn.config(text="?", bg="#3a4a78", state="normal")
 
+        # --- FIX TIMER ---
+        self.timer_running = False
         self.time_seconds = 120
         self.info_timer.config(text="Timer: 02:00")
         self.timer_running = True
+        self.update_timer()
 
         self.update_info()
 
@@ -218,4 +217,3 @@ class MemoryGame:
 root = tk.Tk()
 MemoryGame(root)
 root.mainloop()
-

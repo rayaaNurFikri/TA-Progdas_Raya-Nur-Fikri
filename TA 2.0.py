@@ -2,47 +2,31 @@ import tkinter as tk
 import random
 from tkinter import messagebox
 
-# ===============================
-# CLASS STACK (untuk history klik)
-# ===============================
 class Stack:
     def __init__(self):
         self.items = []
-
     def push(self, item):
         self.items.append(item)
-
     def pop(self):
         if not self.is_empty():
             return self.items.pop()
         return None
-
     def is_empty(self):
         return len(self.items) == 0
 
-
-# ========================================
-# CLASS QUEUE (untuk menyimpan kartu komplit)
-# ========================================
 class Queue:
     def __init__(self):
         self.items = []
-
     def enqueue(self, item):
         self.items.append(item)
-
     def size(self):
         return len(self.items)
 
-
-# ===========================
-# CLASS MEMORY GAME
-# ===========================
 class MemoryGame:
     def __init__(self, root):
         self.root = root
         self.root.title("Memory Number Game - Score Edition")
-        self.root.geometry("500x670")
+        self.root.geometry("500x700")
         self.root.config(bg="#1e233e")
 
         self.buttons = []
@@ -53,15 +37,16 @@ class MemoryGame:
         self.stack_history = Stack()
         self.queue_finish = Queue()
 
-        # Score & langkah (private)
         self._score = 0
         self._steps = 0
-
-        # History score & langkah untuk Undo
         self.history_score = []
         self.history_steps = []
 
+        self.time_seconds = 120
+        self.timer_running = False
+
         self.create_ui()
+        self.start_timer()
 
     def create_ui(self):
         tk.Label(self.root, text="MEMORY NUMBER GAME",
@@ -82,17 +67,20 @@ class MemoryGame:
             btn.grid(row=i // 4, column=i % 4, padx=8, pady=8)
             self.buttons.append(btn)
 
-        self.info_score = tk.Label(self.root,
-                                   text=f"Score: {self._score}",
+        self.info_score = tk.Label(self.root, text=f"Score: {self._score}",
                                    font=("Verdana", 14, "bold"),
                                    bg="#1e233e", fg="#57ff6e")
         self.info_score.pack()
 
-        self.info_steps = tk.Label(self.root,
-                                   text=f"Langkah: {self._steps}",
+        self.info_steps = tk.Label(self.root, text=f"Langkah: {self._steps}",
                                    font=("Verdana", 14, "bold"),
                                    bg="#1e233e", fg="#ffc04c")
         self.info_steps.pack(pady=5)
+
+        self.info_timer = tk.Label(self.root, text="Timer: 02:00",
+                                   font=("Verdana", 14, "bold"),
+                                   bg="#1e233e", fg="#f94dff")
+        self.info_timer.pack(pady=5)
 
         tk.Button(self.root, text="Undo", command=self.undo_move,
                   width=20, font=("Verdana", 11, "bold"),
@@ -104,27 +92,39 @@ class MemoryGame:
                   bg="#0099ff", fg="white",
                   activebackground="#0076c7").pack(pady=5)
 
-    # Setter & Getter
-    def set_score(self, value):
-        self._score = value
+    def start_timer(self):
+        if not self.timer_running:
+            self.timer_running = True
+            self.update_timer()
 
-    def get_score(self):
-        return self._score
+    def update_timer(self):
+        if not self.timer_running:
+            return
 
-    def set_steps(self, value):
-        self._steps = value
+        minutes = self.time_seconds // 60
+        seconds = self.time_seconds % 60
+        self.info_timer.config(text=f"Timer: {minutes:02d}:{seconds:02d}")
 
-    def get_steps(self):
-        return self._steps
+        if self.time_seconds == 0:
+            self.timer_running = False
+            self.game_over()
+            return
 
-    # ===========================
-    # Membuka kartu
-    # ===========================
+        self.time_seconds -= 1
+        self.root.after(1000, self.update_timer)
+
+    def game_over(self):
+        for btn in self.buttons:
+            btn.config(state="disabled")
+        messagebox.showerror("GAME OVER", "Waktu habis!\nSilahkan restart game.")
+
     def open_card(self, index):
+        if not self.timer_running:
+            return
+
         if len(self.opened_cards) == 2:
             messagebox.showwarning("Peringatan", "Maksimal hanya dapat membuka 2 kartu!")
             return
-
         if self.buttons[index]["text"] != "?":
             return
 
@@ -137,13 +137,9 @@ class MemoryGame:
             self.update_info()
             self.root.after(650, self.check_match)
 
-    # ===========================
-    # Mengecek kecocokan
-    # ===========================
     def check_match(self):
         i1, i2 = self.opened_cards
 
-        # Simpan riwayat sebelum perubahan (untuk Undo)
         self.history_score.append(self._score)
         self.history_steps.append(self._steps)
 
@@ -161,30 +157,25 @@ class MemoryGame:
         self.update_info()
 
         if self.queue_finish.size() == 8:
-            messagebox.showinfo("Selesai!", f"Kamu selesai!\nLangkah: {self._steps}\nScore: {self._score}")
+            self.timer_running = False
+            messagebox.showinfo("Selesai!",
+                                f"Kamu selesai!\nLangkah: {self._steps}\nScore: {self._score}\nWaktu: {self.info_timer.cget('text')}")
 
-    # ===========================
-    # Undo
-    # ===========================
     def undo_move(self):
         if self.stack_history.is_empty():
             messagebox.showwarning("Undo", "Tidak ada yang bisa di-undo.")
             return
 
         last_index = self.stack_history.pop()
-
-        # Kartu match tidak bisa di-undo
         if self.buttons[last_index]["bg"] == "#13b357":
-            messagebox.showwarning("Undo", "Kartu yang sudah match tidak bisa di-undo.")
+            messagebox.showwarning("Undo", "Kartu match tidak bisa di-undo.")
             return
 
-        # Jika hanya 1 kartu terbuka
         if len(self.opened_cards) == 1:
             self.buttons[last_index].config(text="?", bg="#3a4a78")
             self.opened_cards.remove(last_index)
             return
 
-        # Jika Undo dilakukan setelah 2 kartu terbuka dan sudah dicek
         if self.history_score and self.history_steps:
             self._score = self.history_score.pop()
             self._steps = self.history_steps.pop()
@@ -195,9 +186,7 @@ class MemoryGame:
 
         self.update_info()
 
-    # ===========================
-    # Restart Game
-    # ===========================
+    # 🔥 Perbaikan penuh timer restart
     def restart_game(self):
         self._score = 0
         self._steps = 0
@@ -210,21 +199,22 @@ class MemoryGame:
         random.shuffle(self.numbers)
 
         for btn in self.buttons:
-            btn.config(text="?", bg="#3a4a78")
+            btn.config(text="?", bg="#3a4a78", state="normal")
+
+        # --- FIX TIMER ---
+        self.timer_running = False
+        self.time_seconds = 120
+        self.info_timer.config(text="Timer: 02:00")
+        self.timer_running = True
+        self.update_timer()
 
         self.update_info()
 
-    # ===========================
-    # Update score & langkah
-    # ===========================
     def update_info(self):
         self.info_score.config(text=f"Score: {self._score}")
         self.info_steps.config(text=f"Langkah: {self._steps}")
 
-
-# =========================
-# MAIN PROGRAM
-# =========================
 root = tk.Tk()
 MemoryGame(root)
 root.mainloop()
+
